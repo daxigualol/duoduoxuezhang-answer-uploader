@@ -5,9 +5,9 @@ const start = src.indexOf('/* @testable:start */');
 const end = src.indexOf('/* @testable:end */');
 if (start < 0 || end < 0) throw new Error('testable markers not found');
 const block = src.slice(start, end);
-const api = new Function(block + '\nreturn { parseAnswerText, lettersOf, normalizeText };')();
+const api = new Function(block + '\nreturn { parseAnswerText, lettersOf, normalizeText, keyToOption };')();
 
-const { parseAnswerText, lettersOf } = api;
+const { parseAnswerText, lettersOf, keyToOption } = api;
 
 let failed = 0;
 function eq(name, actual, expected) {
@@ -47,6 +47,13 @@ eq('zero padded', norm(parseAnswerText('001 A\n002 B\n010 CD', 1, 100)), { 1: 'A
 // 120 题范围（101–120 单选，81–100 多选）
 eq('total 120 upper bound', norm(parseAnswerText('120.D 121.A', 1, 120)), { 120: 'D' });
 eq('multi range 81-100', norm(parseAnswerText('81.AB 100.CD 119.A', 1, 120)), { 81: 'AB', 100: 'CD', 119: 'A' });
+
+// 快捷键映射
+eq('keys num 1-4', ['1', '2', '3', '4'].map((k) => keyToOption(k, 'num')), ['A', 'B', 'C', 'D']);
+eq('keys num ignores letters', keyToOption('a', 'num'), null);
+eq('keys alpha A-D', ['a', 'B', 'c', 'D'].map((k) => keyToOption(k, 'alpha')), ['A', 'B', 'C', 'D']);
+eq('keys alpha ignores digits', keyToOption('1', 'alpha'), null);
+eq('keys ignores other keys', [keyToOption('m', 'num'), keyToOption('ArrowUp', 'alpha'), keyToOption('', 'num')], [null, null, null]);
 
 console.log(failed ? '\n' + failed + ' test(s) failed' : '\nall tests passed');
 process.exit(failed ? 1 : 0);

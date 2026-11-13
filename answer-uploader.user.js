@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         批量答案录入 · 多多学长
 // @namespace    local.batch-answer
-// @version      1.2.0
+// @version      1.3.0
 // @description  人工选择 120 道题的答案（81–100 多选），批量调用 /api/answer 上传（单选/多选、草稿保存、失败重试）
 // @match        https://www.duoduoxuezhang.com/*
 // @match        https://duoduoxuezhang.com/*
@@ -18,8 +18,6 @@
   const MULTI_FROM = 81;
   const MULTI_TO = 100;
   const defaultMulti = (q) => q >= MULTI_FROM && q <= MULTI_TO;
-  /* 键盘快捷录入：按数字键 1/2/3/4 分别等于 A/B/C/D */
-  const KEY_OPT = { 1: 'A', 2: 'B', 3: 'C', 4: 'D' };
   const ON_SITE = /(^|\.)duoduoxuezhang\.com$/i.test(location.hostname);
   const API_URL = ON_SITE ? '/api/answer' : 'https://www.duoduoxuezhang.com/api/answer';
 
@@ -48,6 +46,16 @@
     let out = '';
     for (let i = 0; i < up.length; i++) if (out.indexOf(up[i]) < 0) out += up[i];
     return out.split('').sort().join('');
+  }
+
+  /* 快捷录入键位映射：mode='num' 时 1-4 → A-D；mode='alpha' 时 A-D → A-D */
+  function keyToOption(key, mode) {
+    const k = String(key == null ? '' : key);
+    if (mode === 'alpha') {
+      const up = k.toUpperCase();
+      return up.length === 1 && 'ABCD'.indexOf(up) >= 0 ? up : null;
+    }
+    return { 1: 'A', 2: 'B', 3: 'C', 4: 'D' }[k] || null;
   }
 
   function parseAnswerText(text, startAt, total) {
@@ -89,7 +97,7 @@
      状态
      ========================================================================= */
   function defaultState() {
-    return { v: 2, subject: 'computer', year: '2026', delay: 300, autoNext: true, answers: {} };
+    return { v: 2, subject: 'computer', year: '2026', delay: 300, autoNext: true, keys: 'num', answers: {} };
   }
 
   function loadState() {
@@ -102,6 +110,7 @@
         if (s.year != null && String(s.year).trim()) d.year = String(s.year).trim();
         if (s.delay != null) d.delay = clampInt(s.delay, 0, 5000, 300);
         d.autoNext = s.autoNext !== false;
+        d.keys = s.keys === 'alpha' ? 'alpha' : 'num';
         if (s.answers && typeof s.answers === 'object') {
           Object.keys(s.answers).forEach((k) => {
             const q = parseInt(k, 10);
@@ -216,6 +225,11 @@
   button.mini:hover{background:#f1f5f9}
   button.mini:disabled{opacity:.45;cursor:default}
   button.mini.blue{color:#2563eb;border-color:#bfdbfe;background:#eff6ff}
+  .seg{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff}
+  .seg button{border:0;background:transparent;color:#475569;padding:5px 9px;cursor:pointer;
+              font-size:11.5px;font-weight:600;font-family:inherit;line-height:1.2}
+  .seg button+button{border-left:1px solid #e2e8f0}
+  .seg button.on{background:#2563eb;color:#fff}
   .log{max-height:92px;overflow:auto;margin-top:6px;padding:6px 8px;border-radius:8px;background:#0f172a;
        color:#cbd5e1;font:11px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-all}
   .log:empty{display:none}
@@ -259,10 +273,18 @@
           <span class="hintline" style="margin:0">默认题型：<b>81–100 多选</b>，1–80、101–120 单选</span>
           <button id="resetTypes" type="button" class="mini">恢复默认题型</button>
         </div>
+        <div class="cfg">
+          <span style="font-size:12px;color:#475569">快捷键</span>
+          <span class="seg">
+            <button type="button" id="keyNum" class="on">1234</button>
+            <button type="button" id="keyAlpha">ABCD</button>
+          </span>
+          <span class="hintline" id="keyHint" style="margin:0"></span>
+        </div>
         <div class="grid" id="grid"></div>
         <p class="hintline" style="margin:8px 0 0">
           共 120 题。单击字母选择答案，再次单击取消；点亮 <b>多</b> 表示多选题（可多选）。
-          键盘 <code>1</code>~<code>4</code> 直接录入（1=A、2=B、3=C、4=D），<code>M</code> 切换多选，方向键移动，<code>Backspace</code> 清空。
+          <code>M</code> 切换多选，方向键移动，<code>Backspace</code> 清空。
         </p>
       </div>
       <div class="pane" id="pane-paste" hidden>
@@ -372,7 +394,7 @@
         b.dataset.act = 'opt';
         b.dataset.o = o;
         b.textContent = o;
-        b.title = o + '（数字键 ' + (i + 1) + '）';
+        b.title = o + '（' + (i + 1) + ' / ' + o + '）';
         os.appendChild(b);
       });
 
@@ -736,6 +758,19 @@
     $('#autoNext').checked = !!state.autoNext;
   }
 
+  function syncKeyMode() {
+    const isNum = state.keys !== 'alpha';
+    $('#keyNum').classList.toggle('on', isNum);
+    $('#keyAlpha').classList.toggle('on', !isNum);
+    $('#keyHint').textContent = isNum ? '当前：1=A 2=B 3=C 4=D' : '当前：A / B / C / D';
+  }
+
+  function setKeyMode(mode) {
+    state.keys = mode === 'alpha' ? 'alpha' : 'num';
+    save();
+    syncKeyMode();
+  }
+
   function bindAll() {
     $('#fab').addEventListener('click', () => {
       const p = $('#panel');
@@ -801,7 +836,7 @@
         toggleMulti(q);
         return;
       }
-      const opt = KEY_OPT[k];
+      const opt = keyToOption(k, state.keys);
       if (opt) {
         e.preventDefault();
         e.stopPropagation();
@@ -891,6 +926,9 @@
       save();
     });
 
+    $('#keyNum').addEventListener('click', () => setKeyMode('num'));
+    $('#keyAlpha').addEventListener('click', () => setKeyMode('alpha'));
+
     $('#upload').addEventListener('click', () => {
       if (running) return;
       const from = clampInt($('#startAt').value, 1, CFG.TOTAL, 1);
@@ -946,6 +984,7 @@
     buildGrid();
     bindAll();
     syncInputs();
+    syncKeyMode();
     refreshCounts();
 
     if (!ON_SITE) {
