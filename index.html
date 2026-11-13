@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批量答案录入 · 离线编辑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0b1220; color: #e2e8f0;
+    font: 15px/1.75 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 120px; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    background: #1e3a8a; color: #bfdbfe; font-size: 12px; letter-spacing: .04em;
+  }
+  h1 { font-size: 24px; margin: 14px 0 6px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; color: #93c5fd; }
+  p, li { color: #94a3b8; }
+  ol, ul { padding-left: 22px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  code {
+    background: #16233a; border: 1px solid #263650; border-radius: 5px;
+    padding: 1px 6px; font: 12.5px ui-monospace, Consolas, monospace; color: #cbd5e1;
+  }
+  .card { background: #111c2f; border: 1px solid #22314a; border-radius: 12px; padding: 16px 18px; margin-top: 14px; }
+  .warn { border-color: #7c4a11; background: #1f1608; }
+  .warn strong { color: #fcd34d; }
+  .tip { color: #64748b; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">离线编辑页</span>
+  <h1>批量答案录入 · 多多学长</h1>
+  <p>点右下角 <strong>“批量答案”</strong> 打开录入面板：可以网格点选，也可以在“批量粘贴”里一次贴入 120 题的答案。</p>
+
+  <h2>题型</h2>
+  <p><strong>81–100 为多选</strong>（可勾选多个字母），<strong>1–80 与 101–120 为单选</strong>。
+     面板已按此默认设置，单格也可以手动改；粘贴时若某题写了多个字母，会自动标成多选。</p>
+
+  <div class="card warn">
+    <strong>这里只能编辑，不能上传。</strong>
+    <p style="margin:6px 0 0">浏览器不允许网页带着别站的登录 Cookie 跨域提交，所以本页的上传必定失败。
+      正确做法：先在这里把答案录好 → 面板里“批量粘贴 → 导出当前答案 / 复制” → 到
+      <code>www.duoduoxuezhang.com</code> 页面里用油猴脚本打开同样的面板 → 粘贴 → 批量上传。</p>
+  </div>
+
+  <h2>三步走</h2>
+  <ol>
+    <li>本页录入答案（网格点选，或 <code>1.A 2.B 3.ABC</code> 这样的文本粘贴）。</li>
+    <li>打开“批量粘贴”标签，点 <strong>导出当前答案</strong>，再点 <strong>复制</strong>。</li>
+    <li>在网站上打开面板 → “批量粘贴” → 粘贴 → 解析并填入 → 回“网格录入”核对 → 底部 <strong>批量上传</strong>。</li>
+  </ol>
+
+  <h2>答案文本格式</h2>
+  <ul>
+    <li>每行一题：<code>1.A</code>、<code>2.B</code>、<code>3.ABC</code></li>
+    <li>也可以连写：<code>1.A 2.B 3.ABC</code>、<code>1、A 2 B 3:ABC</code></li>
+    <li>没有题号时，按“起始题号”往后依次填入：<code>A B AB C</code></li>
+    <li>多个字母表示多选，顺序无所谓，<code>BA</code> 与 <code>AB</code> 等价。</li>
+  </ul>
+
+  <h2>题号规则</h2>
+  <p>提交的 <code>questionId</code> 由 <code>科目-年份-三位题号</code> 拼成，例如第 3 题：<code>computer-2026-003</code>，
+     第 120 题：<code>computer-2026-120</code>。科目默认 <code>computer</code>，年份默认 <code>2026</code>，可在面板顶部修改。</p>
+
+  <p class="tip">本页只做本地存储，答案保存在浏览器 localStorage，刷新不会丢。</p>
+</div>
+
+<script src="answer-uploader.user.js"></script>
+</body>
+</html>
