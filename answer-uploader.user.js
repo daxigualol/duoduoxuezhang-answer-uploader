@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         批量答案录入 · 多多学长
 // @namespace    local.batch-answer
-// @version      1.1.0
+// @version      1.2.0
 // @description  人工选择 120 道题的答案（81–100 多选），批量调用 /api/answer 上传（单选/多选、草稿保存、失败重试）
 // @match        https://www.duoduoxuezhang.com/*
 // @match        https://duoduoxuezhang.com/*
@@ -18,6 +18,8 @@
   const MULTI_FROM = 81;
   const MULTI_TO = 100;
   const defaultMulti = (q) => q >= MULTI_FROM && q <= MULTI_TO;
+  /* 键盘快捷录入：按数字键 1/2/3/4 分别等于 A/B/C/D */
+  const KEY_OPT = { 1: 'A', 2: 'B', 3: 'C', 4: 'D' };
   const ON_SITE = /(^|\.)duoduoxuezhang\.com$/i.test(location.hostname);
   const API_URL = ON_SITE ? '/api/answer' : 'https://www.duoduoxuezhang.com/api/answer';
 
@@ -260,7 +262,7 @@
         <div class="grid" id="grid"></div>
         <p class="hintline" style="margin:8px 0 0">
           共 120 题。单击字母选择答案，再次单击取消；点亮 <b>多</b> 表示多选题（可多选）。
-          键盘 <code>A</code>~<code>D</code> 直接录入，<code>M</code> 切换多选，方向键移动，<code>Backspace</code> 清空。
+          键盘 <code>1</code>~<code>4</code> 直接录入（1=A、2=B、3=C、4=D），<code>M</code> 切换多选，方向键移动，<code>Backspace</code> 清空。
         </p>
       </div>
       <div class="pane" id="pane-paste" hidden>
@@ -363,13 +365,14 @@
 
       const os = document.createElement('div');
       os.className = 'os';
-      ['A', 'B', 'C', 'D'].forEach((o) => {
+      ['A', 'B', 'C', 'D'].forEach((o, i) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'o';
         b.dataset.act = 'opt';
         b.dataset.o = o;
         b.textContent = o;
+        b.title = o + '（数字键 ' + (i + 1) + '）';
         os.appendChild(b);
       });
 
@@ -798,10 +801,11 @@
         toggleMulti(q);
         return;
       }
-      if (up.length === 1 && 'ABCD'.indexOf(up) >= 0) {
+      const opt = KEY_OPT[k];
+      if (opt) {
         e.preventDefault();
         e.stopPropagation();
-        pick(q, up);
+        pick(q, opt);
         const cur = state.answers[q];
         const isMulti = !!(cur && cur.m);
         if (state.autoNext && !isMulti && q < CFG.TOTAL) setTimeout(() => cells[q + 1].focus(), 50);
