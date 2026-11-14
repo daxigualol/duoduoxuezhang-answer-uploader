@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         批量答案录入 · 多多学长
 // @namespace    local.batch-answer
-// @version      1.4.0
+// @version      1.4.1
 // @description  人工选择 100 道题的答案（81–100 多选），批量调用 /api/answer 上传（单选/多选、草稿保存、失败重试）
 // @match        https://www.duoduoxuezhang.com/*
 // @match        https://duoduoxuezhang.com/*
@@ -235,10 +235,12 @@
   .log{max-height:92px;overflow:auto;margin-top:6px;padding:6px 8px;border-radius:8px;background:#0f172a;
        color:#cbd5e1;font:11px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-all}
   .log:empty{display:none}
+  .log-line{background:transparent}
   .log-line.ok{color:#86efac}
   .log-line.err{color:#fca5a5}
   .log-line.warn{color:#fcd34d}
   .log-line.info{color:#93c5fd}
+  .log-line.plain{color:#cbd5e1}
   `;
 
   /* =========================================================================
@@ -458,7 +460,7 @@
     }
     const n = answeredCount().n;
     if (!n) {
-      log('info', '当前没有已录入的答案，无需清空');
+      log('plain', '当前没有已录入的答案，无需清空');
       return;
     }
     if (!confirm('确定清空全部 ' + n + ' 条答案吗？此操作不可撤销。')) return;
@@ -472,7 +474,7 @@
     $('#barFill').style.width = '0%';
     $('#retry').disabled = true;
     refreshCounts();
-    log('warn', '已清空全部答案');
+    log('plain', '已清空全部答案');
   }
 
   function answeredCount() {
