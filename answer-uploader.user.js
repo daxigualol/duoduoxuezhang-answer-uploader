@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         批量答案录入 · 多多学长
 // @namespace    local.batch-answer
-// @version      1.4.1
+// @version      1.4.2
 // @description  人工选择 100 道题的答案（81–100 多选），批量调用 /api/answer 上传（单选/多选、草稿保存、失败重试）
 // @match        https://www.duoduoxuezhang.com/*
 // @match        https://duoduoxuezhang.com/*
@@ -172,9 +172,9 @@
   .hd .sub{display:block;margin-top:2px;font-size:11px;opacity:.82;font-weight:400}
   .icon{background:transparent;border:0;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0 4px;opacity:.85}
   .icon:hover{opacity:1}
-  .warn{margin:8px 10px 0;padding:7px 9px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;
-        color:#9a3412;font-size:11.5px;line-height:1.6}
-  .warn[hidden]{display:none}
+  .warnbox{margin:8px 10px 0;padding:7px 9px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;
+           color:#9a3412;font-size:11.5px;line-height:1.6}
+  .warnbox[hidden]{display:none}
   .tabs{display:flex;gap:4px;padding:8px 10px 0;background:#f8fafc;border-bottom:1px solid #e2e8f0}
   .tabs button{flex:1;border:0;background:transparent;padding:7px 0;cursor:pointer;
                font-size:12px;line-height:1;font-weight:500;font-family:inherit;color:#64748b;border-radius:8px 8px 0 0}
@@ -238,7 +238,9 @@
   .log-line{background:transparent}
   .log-line.ok{color:#86efac}
   .log-line.err{color:#fca5a5}
-  .log-line.warn{color:#fcd34d}
+  /* 高亮行：只加底色，用负外边距抵消内边距，文字与普通行保持左对齐 */
+  .log-line.warn{color:#fde68a;background:rgba(245,158,11,.22);border-radius:3px;
+                 padding:0 4px;margin:0 -4px}
   .log-line.info{color:#93c5fd}
   .log-line.plain{color:#cbd5e1}
   `;
@@ -253,7 +255,7 @@
       <div><b>批量答案录入</b><span class="sub" id="hdSub"></span></div>
       <button class="icon" id="close" type="button" title="关闭">×</button>
     </header>
-    <div class="warn" id="warn" hidden></div>
+    <div class="warnbox" id="warn" hidden></div>
     <nav class="tabs">
       <button type="button" data-tab="grid" class="on">网格录入</button>
       <button type="button" data-tab="paste">批量粘贴</button>
@@ -474,7 +476,7 @@
     $('#barFill').style.width = '0%';
     $('#retry').disabled = true;
     refreshCounts();
-    log('plain', '已清空全部答案');
+    log('warn', '已清空全部答案');
   }
 
   function answeredCount() {
