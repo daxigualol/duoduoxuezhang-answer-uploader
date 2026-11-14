@@ -44,9 +44,9 @@ eq('lettersOf keeps A-D only', lettersOf('aZbC中1'), 'ABC');
 // 逐题一行、带前导零
 eq('zero padded', norm(parseAnswerText('001 A\n002 B\n010 CD', 1, 100)), { 1: 'A', 2: 'B', 10: 'CD' });
 
-// 120 题范围（101–120 单选，81–100 多选）
-eq('total 120 upper bound', norm(parseAnswerText('120.D 121.A', 1, 120)), { 120: 'D' });
-eq('multi range 81-100', norm(parseAnswerText('81.AB 100.CD 119.A', 1, 120)), { 81: 'AB', 100: 'CD', 119: 'A' });
+// 100 题范围（81–100 多选，1–80 单选）
+eq('total 100 upper bound', norm(parseAnswerText('100.D 101.A', 1, 100)), { 100: 'D' });
+eq('multi range 81-100', norm(parseAnswerText('81.AB 100.CD 99.A', 1, 100)), { 81: 'AB', 100: 'CD', 99: 'A' });
 
 // 快捷键映射
 eq('keys num 1-4', ['1', '2', '3', '4'].map((k) => keyToOption(k, 'num')), ['A', 'B', 'C', 'D']);

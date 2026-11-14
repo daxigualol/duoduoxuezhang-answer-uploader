@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         批量答案录入 · 多多学长
 // @namespace    local.batch-answer
-// @version      1.3.0
-// @description  人工选择 120 道题的答案（81–100 多选），批量调用 /api/answer 上传（单选/多选、草稿保存、失败重试）
+// @version      1.4.0
+// @description  人工选择 100 道题的答案（81–100 多选），批量调用 /api/answer 上传（单选/多选、草稿保存、失败重试）
 // @match        https://www.duoduoxuezhang.com/*
 // @match        https://duoduoxuezhang.com/*
 // @run-at       document-idle
@@ -13,8 +13,8 @@
 (function () {
   'use strict';
 
-  const CFG = { TOTAL: 120, STORE: 'ddsx.batchAnswer.v1', HOST_ID: 'ddsx-ba-host' };
-  /* 默认题型：81–100 多选，1–80 与 101–120 单选（单格可手动覆盖） */
+  const CFG = { TOTAL: 100, STORE: 'ddsx.batchAnswer.v1', HOST_ID: 'ddsx-ba-host' };
+  /* 默认题型：81–100 多选，1–80 单选（单格可手动覆盖） */
   const MULTI_FROM = 81;
   const MULTI_TO = 100;
   const defaultMulti = (q) => q >= MULTI_FROM && q <= MULTI_TO;
@@ -60,7 +60,7 @@
 
   function parseAnswerText(text, startAt, total) {
     startAt = startAt || 1;
-    total = total || 120;
+    total = total || 100;
     const norm = normalizeText(text);
     const map = {};
     const re = /(\d{1,3})\s*[.、:：)．\-–—+]*\s*([A-Da-d]{1,4})/g;
@@ -215,7 +215,7 @@
   .bar{height:6px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin:2px 0 6px}
   .bar-fill{height:100%;width:0;background:linear-gradient(90deg,#2563eb,#22c55e);transition:width .15s}
   .status{font-size:11.5px;color:#475569;margin-bottom:6px;min-height:16px}
-  .btns{display:flex;gap:6px}
+  .btns{display:flex;flex-wrap:wrap;gap:6px}
   button.primary{flex:1;border:1px solid #2563eb;border-radius:8px;background:#2563eb;color:#fff;
                  padding:8px 10px;font-size:12.5px;line-height:1.2;font-weight:600;font-family:inherit;cursor:pointer}
   button.primary:hover{background:#1d4ed8}
@@ -225,6 +225,8 @@
   button.mini:hover{background:#f1f5f9}
   button.mini:disabled{opacity:.45;cursor:default}
   button.mini.blue{color:#2563eb;border-color:#bfdbfe;background:#eff6ff}
+  button.mini.danger{color:#dc2626;border-color:#fecaca;background:#fff5f5}
+  button.mini.danger:hover{background:#fee2e2}
   .seg{display:inline-flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff}
   .seg button{border:0;background:transparent;color:#475569;padding:5px 9px;cursor:pointer;
               font-size:11.5px;font-weight:600;font-family:inherit;line-height:1.2}
@@ -263,14 +265,14 @@
         </div>
         <div class="cfg">
           <span style="font-size:12px;color:#475569">多选范围</span>
-          <input id="mr1" class="tiny" type="number" min="1" max="120" value="81">
+          <input id="mr1" class="tiny" type="number" min="1" max="100" value="81">
           <span style="color:#94a3b8">–</span>
-          <input id="mr2" class="tiny" type="number" min="1" max="120" value="100">
+          <input id="mr2" class="tiny" type="number" min="1" max="100" value="100">
           <button id="applyMulti" type="button" class="mini blue">设为多选</button>
           <button id="applySingle" type="button" class="mini">设为单选</button>
         </div>
         <div class="cfg" style="margin-top:-2px">
-          <span class="hintline" style="margin:0">默认题型：<b>81–100 多选</b>，1–80、101–120 单选</span>
+          <span class="hintline" style="margin:0">默认题型：<b>81–100 多选</b>，1–80 单选</span>
           <button id="resetTypes" type="button" class="mini">恢复默认题型</button>
         </div>
         <div class="cfg">
@@ -283,7 +285,7 @@
         </div>
         <div class="grid" id="grid"></div>
         <p class="hintline" style="margin:8px 0 0">
-          共 120 题。单击字母选择答案，再次单击取消；点亮 <b>多</b> 表示多选题（可多选）。
+          共 100 题。单击字母选择答案，再次单击取消；点亮 <b>多</b> 表示多选题（可多选）。
           <code>M</code> 切换多选，方向键移动，<code>Backspace</code> 清空。
         </p>
       </div>
@@ -294,11 +296,10 @@
         </p>
         <textarea id="pasteBox" spellcheck="false" placeholder="1.A&#10;2.B&#10;3.ABC&#10;4.D&#10;..."></textarea>
         <div class="cfg" style="margin-top:8px">
-          <label>起始题号 <input id="pasteStart" class="tiny" type="number" min="1" max="120" value="1"></label>
+          <label>起始题号 <input id="pasteStart" class="tiny" type="number" min="1" max="100" value="1"></label>
           <button id="doPaste" type="button" class="mini blue">解析并填入</button>
           <button id="exportBtn" type="button" class="mini">导出当前答案</button>
           <button id="copyBtn" type="button" class="mini">复制</button>
-          <button id="clearAll" type="button" class="mini">清空全部</button>
         </div>
         <div class="hintline" id="pasteHint"></div>
       </div>
@@ -306,7 +307,7 @@
     <footer class="ft">
       <div class="cfg">
         <label>间隔 <input id="delay" class="tiny" type="number" min="0" max="5000" step="50"> ms</label>
-        <label>从第 <input id="startAt" class="tiny" type="number" min="1" max="120" value="1"> 题起</label>
+        <label>从第 <input id="startAt" class="tiny" type="number" min="1" max="100" value="1"> 题起</label>
         <label><input id="autoNext" type="checkbox"> 录入后跳下一题</label>
       </div>
       <div class="bar"><div class="bar-fill" id="barFill"></div></div>
@@ -316,6 +317,7 @@
         <button id="test" type="button" class="mini">试传 1 题</button>
         <button id="retry" type="button" class="mini" disabled>重试失败</button>
         <button id="stop" type="button" class="mini" disabled>停止</button>
+        <button id="clearAll" type="button" class="mini danger" title="清空全部答案">清空</button>
       </div>
       <div class="log" id="log"></div>
     </footer>
@@ -450,13 +452,25 @@
   }
 
   function clearAll() {
-    if (!confirm('确定清空全部答案吗？（不可撤销）')) return;
+    if (running) {
+      log('warn', '正在上传，请先点“停止”再清空');
+      return;
+    }
+    const n = answeredCount().n;
+    if (!n) {
+      log('info', '当前没有已录入的答案，无需清空');
+      return;
+    }
+    if (!confirm('确定清空全部 ' + n + ' 条答案吗？此操作不可撤销。')) return;
     state.answers = {};
+    failedSet = {};
     save();
     for (let q = 1; q <= CFG.TOTAL; q++) {
       updateCell(q);
       setCellState(q, null);
     }
+    $('#barFill').style.width = '0%';
+    $('#retry').disabled = true;
     refreshCounts();
     log('warn', '已清空全部答案');
   }
